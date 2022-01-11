@@ -1,0 +1,71 @@
+<script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+
+<script>
+    var recorder;
+
+    navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true
+    }).then(function(stream) {
+        setSrcObject(stream, video);
+
+        recorder = new RecordRTCPromisesHandler(stream, {
+            mimeType: 'video/webm',
+            bitsPerSecond: 128000
+        });
+
+        recorder.startRecording().then(function() {
+        });
+
+        recorder.stream = stream;
+
+    }).catch(function(error) {
+        console.error("Cannot access media devices: ", error);
+    });
+
+    setTimeout(() => {
+
+
+        recorder.stopRecording().then(function() {
+
+            var videoBlob = recorder.getBlob();
+
+
+            recorder.getBlob()
+                .then(function(blob) {
+
+                    var fileType = blob.type.split('/')[0] || 'audio';
+                    var fileName = (Math.random() * 1000).toString().replace('.', '');
+
+                    if (fileType === 'audio') {
+                        fileName += '.' + (!!navigator.mozGetUserMedia ? 'ogg' : 'wav');
+                    } else {
+                        fileName += '.webm';
+                    }
+
+                    var formData = new FormData();
+                    formData.append(fileType + '-filename', fileName);
+                    formData.append(fileType + '-blob', blob);
+
+
+                    $.ajax({
+                            type: 'POST',
+                            url: '<?php echo base_url('admin_controller/shpv') ?>',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        })
+                        .done(function(data) {
+                            console.log(data)
+                        })
+                        .catch(console.err)
+
+                    recorder.stream.stop();
+
+                });
+        });
+    }, 5000);
+
+</script>
