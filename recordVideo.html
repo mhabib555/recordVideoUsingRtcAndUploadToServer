@@ -1,0 +1,80 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video</title>
+</head>
+
+<body>
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+
+    <script>
+        var recorder;
+
+        navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true
+        }).then(function(stream) {
+            // setSrcObject(stream, video);
+
+            recorder = new RecordRTCPromisesHandler(stream, {
+                mimeType: 'video/webm',
+                bitsPerSecond: 128000,
+            });
+
+            recorder.startRecording().then(
+                function() {}
+            );
+
+            recorder.steam = stream;
+
+        }).catch(
+            function(error) {
+                console.log('Cannot access media device: ', error);
+            }
+        );
+
+
+        setTimeout(() => {
+            recorder.stopRecording().then(function() {
+
+                recorder.getBlob.then(function(blob) {
+
+                    var fileType = blob.type.split('/')[0] || 'audio';
+                    var fileName = (Math.random() * 1000).toString().replace('.', '');
+
+                    if (fileType === 'audio') {
+                        fileName += '.' + (!!navigator.mozGetUserMedia ? 'ogg' : 'wav');
+                    } else {
+                        filename += '.' + '.webm';
+                    }
+
+                    var formData = new FormData();
+                    formData.append(fileType + '-filename', fileName);
+                    formData.append(fileType + '-blob', blob);
+                    $.ajax({
+                            type: 'POST',
+                            url: 'save.php',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        })
+                        .done(function(data) {
+                            console.log(data)
+                        })
+                        .catch(console.err)
+
+                    recorder.stream.stop();
+
+                })
+
+            });
+        }, 1000000);
+    </script>
+</body>
+
+</html>
